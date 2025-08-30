@@ -4,31 +4,62 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI学术邮件助手</title>
+    <!-- 添加Marked.js库 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         :root {
-            --primary-color: #3498db;
-            --secondary-color: #2980b9;
-            --light-bg: #f5f7fa;
-            --dark-text: #2c3e50;
-            --light-text: #7f8c8d;
-            --user-msg-bg: #3498db;
-            --ai-msg-bg: #ecf0f1;
-            --sidebar-bg: #2c3e50;
-            --sidebar-text: #ecf0f1;
+            --primary-color: #00ff8c;
+            --primary-color-transparent: rgba(0, 255, 140, 0.15);
+            --secondary-color: #00cc70;
+            --dark-bg: #0a0a0a;
+            --darker-bg: #050505;
+            --light-bg: #111111;
+            --dark-text: #f0f0f0;
+            --light-text: #a0a0a0;
+            --user-msg-bg: linear-gradient(135deg, #00ff8c 0%, #00cc70 100%);
+            --ai-msg-bg: rgba(20, 20, 20, 0.7);
+            --sidebar-bg: rgba(10, 10, 10, 0.8);
+            --sidebar-text: #f0f0f0;
+            --glass-effect: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --glass-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
         }
+        
+        @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
         
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Space Grotesk', 'Rajdhani', sans-serif;
         }
         
         body {
-            background-color: var(--light-bg);
+            background-color: var(--dark-bg);
             color: var(--dark-text);
             height: 100vh;
             display: flex;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        body::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at center, var(--primary-color-transparent) 0%, transparent 25%);
+            opacity: 0.1;
+            z-index: -1;
+            animation: pulse 15s infinite alternate;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.05; }
+            50% { transform: scale(1.05); opacity: 0.1; }
+            100% { transform: scale(1); opacity: 0.05; }
         }
         
         .sidebar {
@@ -39,57 +70,113 @@
             display: flex;
             flex-direction: column;
             position: relative;
+            backdrop-filter: blur(10px);
+            border-right: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+            z-index: 10;
         }
         
         .logo {
-            font-size: 20px;
-            font-weight: bold;
+            font-size: 22px;
+            font-weight: 600;
             margin-bottom: 30px;
             text-align: center;
             padding-bottom: 15px;
+            letter-spacing: 1px;
+            position: relative;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
         
         .new-chat-btn {
-            background-color: var(--primary-color);
-            color: white;
+            background: var(--user-msg-bg);
+            color: black;
             border: none;
             padding: 12px;
-            border-radius: 5px;
+            border-radius: 4px;
             cursor: pointer;
             margin-bottom: 20px;
             font-weight: 600;
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 255, 140, 0.2);
+        }
+        
+        .new-chat-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 255, 140, 0.3);
         }
         
         .new-chat-btn i {
             margin-right: 8px;
         }
         
+        .language-selector {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 15px;
+            gap: 5px;
+        }
+        
+        .language-btn {
+            background: transparent;
+            color: var(--sidebar-text);
+            border: 1px solid var(--glass-border);
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .language-btn.active {
+            background: var(--primary-color-transparent);
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+        
         .chat-history {
             flex-grow: 1;
             overflow-y: auto;
+            padding-right: 5px;
+            margin-right: -5px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--primary-color) transparent;
+        }
+        
+        .chat-history::-webkit-scrollbar {
+            width: 4px;
+        }
+        
+        .chat-history::-webkit-scrollbar-thumb {
+            background-color: var(--primary-color);
+            border-radius: 4px;
         }
         
         .chat-item {
             padding: 12px;
-            border-radius: 5px;
+            border-radius: 4px;
             margin-bottom: 8px;
             cursor: pointer;
             display: flex;
             justify-content: space-between;
             align-items: center;
             position: relative;
+            background-color: var(--glass-effect);
+            border: 1px solid transparent;
+            transition: all 0.2s ease;
         }
         
         .chat-item:hover {
-            background-color: rgba(255, 255, 255, 0.1);
+            background-color: rgba(255, 255, 255, 0.08);
+            border-color: var(--glass-border);
+            transform: translateX(2px);
         }
         
         .chat-item.active {
-            background-color: var(--primary-color);
+            background-color: var(--primary-color-transparent);
+            border-left: 2px solid var(--primary-color);
         }
         
         .chat-item-content {
@@ -155,84 +242,146 @@
             flex-grow: 1;
             display: flex;
             flex-direction: column;
+            background-color: var(--darker-bg);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .main-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent 49%, var(--glass-effect) 49%, var(--glass-effect) 51%, transparent 51%);
+            background-size: 20px 20px;
+            opacity: 0.03;
+            pointer-events: none;
         }
         
         .chat-header {
-            padding: 20px;
-            border-bottom: 1px solid #ddd;
-            background-color: white;
+            padding: 20px 30px;
+            border-bottom: 1px solid var(--glass-border);
             display: flex;
             align-items: center;
             justify-content: space-between;
+            backdrop-filter: blur(5px);
+            background-color: rgba(10, 10, 10, 0.5);
+            z-index: 5;
         }
         
         .current-chat-title {
             font-size: 18px;
             font-weight: 600;
+            color: var(--dark-text);
         }
         
         .query-type-selector {
             display: flex;
-            background-color: var(--light-bg);
-            border-radius: 20px;
-            padding: 4px;
+            gap: 15px;
         }
         
         .query-type-btn {
-            padding: 8px 16px;
-            border: none;
-            background: none;
-            border-radius: 16px;
+            padding: 8px 18px;
+            border: 1px solid var(--primary-color);
+            background-color: transparent;
+            color: var(--primary-color);
+            border-radius: 4px;
             cursor: pointer;
-            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .query-type-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: all 0.5s ease;
+        }
+        
+        .query-type-btn:hover::before {
+            left: 100%;
         }
         
         .query-type-btn.active {
-            background-color: white;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            background-color: var(--primary-color);
+            color: black;
+            box-shadow: 0 0 15px rgba(0, 255, 140, 0.4);
         }
         
         .chat-messages {
             flex-grow: 1;
-            padding: 20px;
+            padding: 25px 30px;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
+            scrollbar-width: thin;
+            scrollbar-color: var(--primary-color) transparent;
+            position: relative;
+        }
+        
+        .chat-messages::-webkit-scrollbar {
+            width: 4px;
+        }
+        
+        .chat-messages::-webkit-scrollbar-thumb {
+            background-color: var(--primary-color);
+            border-radius: 4px;
         }
         
         .welcome-message {
             text-align: center;
             margin: auto;
-            max-width: 600px;
+            max-width: 700px;
+            background-color: rgba(15, 15, 15, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: var(--glass-shadow);
         }
         
         .welcome-message h1 {
             font-size: 28px;
-            margin-bottom: 16px;
-            color: var(--dark-text);
+            margin-bottom: 15px;
+            color: var(--primary-color);
+            font-weight: 600;
+            letter-spacing: 1px;
         }
         
         .welcome-message p {
             font-size: 16px;
-            color: var(--light-text);
-            line-height: 1.5;
+            color: var(--dark-text);
+            line-height: 1.6;
         }
         
         .message {
-            max-width: 80%;
-            padding: 16px;
-            border-radius: 18px;
+            max-width: 85%;
+            padding: 15px 20px;
+            border-radius: 8px;
             margin-bottom: 16px;
             position: relative;
             line-height: 1.5;
-            white-space: pre-wrap;
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
         }
         
         .user-message {
-            background-color: var(--user-msg-bg);
-            color: white;
+            background: var(--user-msg-bg);
+            color: black;
             align-self: flex-end;
             border-bottom-right-radius: 4px;
+            font-weight: 500;
+            white-space: pre-wrap; /* 用户消息保留换行和空格 */
         }
         
         .ai-message {
@@ -242,18 +391,83 @@
             border-bottom-left-radius: 4px;
         }
         
+        /* 增强Markdown样式 */
+        .ai-message p {
+            margin-bottom: 10px;
+        }
+        
+        .ai-message ul, .ai-message ol {
+            margin-left: 20px;
+            margin-bottom: 10px;
+            padding-left: 15px;
+        }
+        
+        .ai-message li {
+            margin-bottom: 5px;
+        }
+        
+        .ai-message h1, .ai-message h2, .ai-message h3, .ai-message h4 {
+            margin-top: 15px;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+        
+        .ai-message blockquote {
+            border-left: 3px solid var(--primary-color);
+            padding-left: 10px;
+            margin-left: 0;
+            margin-right: 0;
+            font-style: italic;
+            color: var(--light-text);
+        }
+        
+        .ai-message table {
+            border-collapse: collapse;
+            margin: 10px 0;
+            width: 100%;
+        }
+        
+        .ai-message th, .ai-message td {
+            border: 1px solid var(--glass-border);
+            padding: 8px;
+            text-align: left;
+        }
+        
+        .ai-message th {
+            background-color: rgba(0, 0, 0, 0.2);
+        }
+        
+        .ai-message pre {
+            background-color: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+            padding: 12px;
+            overflow-x: auto;
+            border-left: 2px solid var(--primary-color);
+            margin: 10px 0;
+        }
+        
+        .ai-message code {
+            background-color: rgba(0, 0, 0, 0.2);
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        
         .chat-input-container {
             padding: 20px;
-            background-color: white;
-            border-top: 1px solid #ddd;
+            background-color: rgba(10, 10, 10, 0.7);
+            border-top: 1px solid var(--glass-border);
+            backdrop-filter: blur(10px);
+            position: relative;
+            z-index: 5;
         }
         
         .chat-input-wrapper {
             display: flex;
-            border: 1px solid #ddd;
+            border: 1px solid var(--glass-border);
             border-radius: 8px;
             padding: 8px;
-            background-color: white;
+            background-color: rgba(20, 20, 20, 0.7);
         }
         
         .chat-input {
@@ -265,26 +479,35 @@
             height: 60px;
             max-height: 120px;
             outline: none;
+            background-color: transparent;
+            color: var(--dark-text);
+            transition: all 0.3s ease;
         }
         
         .send-button {
-            background-color: var(--primary-color);
-            color: white;
+            background: var(--user-msg-bg);
+            color: black;
             border: none;
             border-radius: 6px;
             padding: 0 20px;
             cursor: pointer;
             align-self: flex-end;
             font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 15px rgba(0, 255, 140, 0.2);
         }
         
         .send-button:hover {
             background-color: var(--secondary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 0 20px rgba(0, 255, 140, 0.4);
         }
         
         .send-button:disabled {
-            background-color: #ccc;
+            background-color: #333;
+            color: #666;
             cursor: not-allowed;
+            box-shadow: none;
         }
         
         .input-hint {
@@ -354,14 +577,16 @@
             .sidebar {
                 width: 100%;
                 height: auto;
-                max-height: 200px;
-                overflow-y: auto;
+                max-height: 30vh;
+                border-right: none;
+                border-bottom: 1px solid var(--glass-border);
             }
             
             .chat-history {
                 display: flex;
                 overflow-x: auto;
                 flex-wrap: nowrap;
+                max-height: 20vh;
             }
             
             .chat-item {
@@ -375,14 +600,67 @@
                 margin-left: 0;
                 margin-top: 5px;
             }
+            
+            .main-container {
+                height: 70vh;
+            }
+            
+            .chat-input-container {
+                padding: 15px;
+            }
+            
+            .chat-messages {
+                padding: 15px 20px;
+            }
+            
+            .welcome-message {
+                padding: 20px;
+            }
+            
+            .chat-header {
+                padding: 15px 20px;
+            }
+            
+            .query-type-btn {
+                padding: 6px 12px;
+                font-size: 13px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .chat-header {
+                flex-direction: column;
+                gap: 10px;
+                align-items: flex-start;
+            }
+            
+            .query-type-selector {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .message {
+                max-width: 90%;
+            }
+            
+            .welcome-message h1 {
+                font-size: 22px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="sidebar">
-        <div class="logo">AI学术邮件助手</div>
+        <div class="logo">AEA<span style="color: var(--primary-color);">MAIL</span></div>
+        <div class="language-selector">
+            <button class="language-btn active" data-lang="zh">中文</button>
+            <button class="language-btn" data-lang="en">English</button>
+        </div>
         <button class="new-chat-btn" id="new-chat-btn">
-            <i>+</i> 新对话
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg> NEW CONVERSATION
         </button>
         <div class="chat-history" id="chat-history">
             <!-- 聊天历史将通过JS动态生成 -->
@@ -393,8 +671,21 @@
         <div class="chat-header">
             <div class="current-chat-title" id="current-chat-title">新对话</div>
             <div class="query-type-selector">
-                <button class="query-type-btn active" data-type="knowledge">知识库查询</button>
-                <button class="query-type-btn" data-type="email">邮件撰写</button>
+                <button class="query-type-btn" data-type="knowledge">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 5px;">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    知识库查询
+                </button>
+                <button class="query-type-btn active" data-type="email">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 5px;">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                        <polyline points="22,6 12,13 2,6"></polyline>
+                    </svg>
+                    邮件撰写
+                </button>
             </div>
         </div>
         
@@ -407,8 +698,13 @@
         
         <div class="chat-input-container">
             <div class="chat-input-wrapper">
-                <textarea class="chat-input" id="message-input" placeholder="输入您的问题..."></textarea>
-                <button class="send-button" id="send-button">发送</button>
+                <textarea class="chat-input" id="message-input" placeholder="输入您的问题或需求..."></textarea>
+                <button class="send-button" id="send-button">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
             </div>
             <div class="input-hint">Enter 发送 / Shift+Enter 换行</div>
         </div>
@@ -424,41 +720,127 @@
             const currentChatTitle = document.getElementById('current-chat-title');
             const queryTypeButtons = document.querySelectorAll('.query-type-btn');
             
-            let chats = [];
-            let currentChatId = null;
-            let currentQueryType = 'knowledge'; // 默认知识库查询模式
+            // 从localStorage加载聊天记录，如果没有则初始化为空数组
+            let chats = JSON.parse(localStorage.getItem('aemail_chats') || '[]');
+            let currentChatId = localStorage.getItem('aemail_current_chat_id') || null;
+            let currentQueryType = localStorage.getItem('aemail_query_type') || 'email'; // 默认邮件撰写模式
+            let currentLanguage = localStorage.getItem('aemail_language') || 'zh'; // 默认中文界面
             
             // API配置
-            const API_BASE_URL = 'http://localhost:5000';
+            const API_KEY = 'sk-cd7cae6e397e484493538cafe9ad91f9';
+            const API_URL = 'https://dashscope.aliyuncs.com/compatible-mode/v1';
             
-            // 初始化示例数据
+            // 知识库内容
+            const AVOID_THUNDER_CONTENT = `
+**1. 主题栏（Subject Line）：精准概括，一眼知意**
+
+主题是邮件的"门面"，需让收件人在未打开邮件时，即可判断邮件核心目的与紧急程度，格式建议为"【场景 / 身份】+ 核心事项 +（可选：时间 / 紧急标识）"。
+
+- 错误示例："咨询问题""请假"（模糊不清，收件人无法快速判断内容）；
+- 正确示例："【本科生 - 2023 级】关于 MAT101课程缓考申请的咨询""【研究生】 Thesis 开题答辩时间调整申请（3 月 10日前回复）"。
+
+**2. 称呼（Salutation）：依身份定礼仪，不缺位不越界**
+
+称呼需匹配收件人身份（教师 / 行政人员 /同学），体现尊重且符合西浦沟通习惯：
+
+- 对教师：统一使用 "Dear Prof. [姓氏]"（教授）或 "Dear Dr.[姓氏]"（博士 /讲师，若不确定职称，可通过西浦官网教师名录查询，避免直接用 "老师"）；
+- 对行政人员（如教务处、学院办公室）：使用 "Dear [部门名称] Team"（如"Dear Undergraduate Office Team"）或 "Dear Ms./Mr.[姓氏]"（已知姓名时）；
+- 对同学 / 同辈：可简化为 "Hi [名字]"（如 "Hi LiMing"），无需过度正式。
+
+**3. 开场白（Opening Paragraph）：简洁寒暄 + 目的前置**
+
+开篇无需冗长铺垫，先简要问候，再**直接说明邮件目的**，避免让收件人"找重点"。
+
+- 基础模板："Dear Prof. Zhang, Hope you are well. I am [你的姓名]，a[你的身份，如 2022 级 BSc Accounting student] from your [课程 /项目，如 FA201 class]. I am writing to inquire about [核心目的，如the extension of the assignment deadline for FA201]."
+- 注意：若为首次沟通，需补充关键身份信息（年级、专业、课程 /导师）；若为后续沟通，可加 "Following up on our conversation last weekabout..." 衔接前文。
+
+**4. 正文（Body Paragraphs）：分点阐述，论据清晰**
+
+正文是邮件核心，需围绕 "目的"展开，用简洁的逻辑传递信息，避免大段文字堆积：
+
+- 若为 "咨询问题"：先说明背景（如 "我在完成 FA201 第 3次作业时，对'合并报表抵消分录'的计算逻辑存在疑问"），再明确提问（如"想请教您：子公司内部交易未实现利润，是否需要在合并报表中全额抵消？"）；
+- 若为 "申请事项"（如缓考、请假、修改开题时间）：需说明"申请原因"（客观、简洁，避免情绪化描述）+"具体需求"（如 "申请将 MAT101缓考时间调整至 5 月 20 日"）+"后续配合措施"（如"承诺在缓考前完成所有复习任务，并同步向助教提交进度"）；
+- 技巧：复杂信息可分 1-2 个段落，每段聚焦 1个核心点，避免跨段落混谈多个事项。
+
+**5. 结尾（Closing Paragraph）：礼貌收尾 + 明确期待**
+
+结尾需表达感谢，并清晰告知"希望对方如何回应"（如回复时间、回复方式），避免模糊表述。
+
+- 基础模板："Thank you for your time and consideration. Could you pleasereply to this email by [日期，如 March 8th] to confirm whether theadjustment is feasible? Should you need any further information,please feel free to contact me. "
+- 常用礼貌结语："Best regards,""Sincerely,"（正式场合，对教师 /行政人员）；"Kind regards,"（同辈 / 熟悉的沟通对象），落款为"你的姓名 + 你的身份"（如 "Wang Hua, 2023 级 BSc Computer Science"）。
+
+**6. 附件（Attachments）：标注清晰，主动提醒**
+
+若邮件含附件（如申请表格、作业、证明材料），需在正文结尾明确提及附件名称与用途，避免收件人遗漏。
+
+- 示例："I have attached the 'Application Form for Exam Deferral'(signed by my supervisor) and the medical certificate for yourreference. "
+- 注意：附件命名需规范，格式为 "【姓名 - 身份】+ 文件用途 + 日期"（如"【Wang Hua-2023 级 CS】Exam Deferral ApplicationForm_20240305"），方便收件人归档查找。
+`;
+
+// 教师称谓列表
+const EMAIL_LIST_CONTENT = `
+haochuan.jiang 称谓：Dear Dr. Jiang
+haoran.li 称谓：Dear Dr. Li
+Wenjuan.Fan 称谓：Dear Dr. Fan
+Tianhong.Gu 称谓： Dear Dr. Gu
+Syed.Abbas 称谓：Dear Dr. Abbas
+Dharma.Adhikari 称谓： Dear Dr. Adhikari
+Yuanrui Huang 称谓：Dear Dr.Huang
+Xun Lei 称谓：Dear Dr.Lei
+Haoying An 称谓：Dear Dr.An
+Yunfei Bo称谓：Dear Dr.Bo
+Ren Zhao 称谓：Dear Dr.Zhao
+Steven Bateman 称谓：Dear Dr.Bateman
+Khalid Akhal Dear Dr.Akhal
+Muhammad Ateeq Dear Dr. Ateeq
+`;
+            
+            // 初始化数据
             function initExampleData() {
-                chats = [
-                    {
-                        id: '1',
-                        title: '部件领导者',
-                        date: '2025-06-25',
-                        messages: [
-                            { type: 'ai', content: '您好！我是您的AI助手，可以帮助撰写学术邮件或查询邮件相关的知识库信息。您想了解什么？' }
-                        ]
-                    },
-                    {
-                        id: '2',
-                        title: '教师称谓查询',
-                        date: '2025-06-24',
-                        messages: [
-                            { type: 'ai', content: '根据知识库，西浦教师的正确称谓格式为：\n- 对教授: Dear Prof. [姓氏]\n- 对博士/讲师: Dear Dr. [姓氏]\n- 对行政人员: Dear [部门名称] Team 或 Dear Ms./Mr. [姓氏]\n- 对同学: Hi [名字]\n\n您可以询问特定教师的称谓，例如："haochuan.jiang的称谓是什么"' },
-                            { type: 'user', content: 'haochuan.jiang的称谓是什么' },
-                            { type: 'ai', content: '根据知识库，haochuan.jiang 的称谓是: Dear Dr. Jiang' }
-                        ]
-                    }
-                ];
+                // 如果没有聊天记录，创建示例数据
+                if (chats.length === 0) {
+                    chats = [
+                        {
+                            id: '1',
+                            title: '邮件助手',
+                            date: '2025-06-25',
+                            messages: [
+                                { type: 'ai', content: '您好！我是您的AI助手，可以帮助撰写学术邮件或查询邮件相关的知识库信息。您想了解什么？' }
+                            ]
+                        },
+                        {
+                            id: '2',
+                            title: '教师称谓查询',
+                            date: '2025-06-24',
+                            messages: [
+                                { type: 'ai', content: '根据知识库，西浦教师的正确称谓格式为：\n- 对教授: Dear Prof. [姓氏]\n- 对博士/讲师: Dear Dr. [姓氏]\n- 对行政人员: Dear [部门名称] Team 或 Dear Ms./Mr. [姓氏]\n- 对同学: Hi [名字]\n\n您可以询问特定教师的称谓，例如："haochuan.jiang的称谓是什么"' },
+                                { type: 'user', content: 'haochuan.jiang的称谓是什么' },
+                                { type: 'ai', content: '根据知识库，haochuan.jiang 的称谓是: Dear Dr. Jiang' }
+                            ]
+                        }
+                    ];
+                    
+                    // 保存到localStorage
+                    saveChatsToLocalStorage();
+                }
                 
-                // 添加一个新对话
-                createNewChat();
+                // 如果没有当前聊天ID或当前ID不存在于chats中，创建新对话
+                if (!currentChatId || !chats.find(chat => chat.id === currentChatId)) {
+                    createNewChat();
+                } else {
+                    // 切换到当前聊天
+                    switchChat(currentChatId);
+                }
                 
                 // 渲染聊天历史
                 renderChatHistory();
+            }
+            
+            // 保存聊天记录到localStorage
+            function saveChatsToLocalStorage() {
+                localStorage.setItem('aemail_chats', JSON.stringify(chats));
+                localStorage.setItem('aemail_current_chat_id', currentChatId);
+                localStorage.setItem('aemail_query_type', currentQueryType);
             }
             
             // 创建新对话
@@ -486,6 +868,9 @@
                 
                 // 重新渲染聊天历史
                 renderChatHistory();
+                
+                // 保存到localStorage
+                saveChatsToLocalStorage();
             }
             
             // 渲染聊天历史
@@ -525,6 +910,9 @@
                                 currentChatTitle.textContent = chat.title;
                             }
                             
+                            // 保存更改到localStorage
+                            saveChatsToLocalStorage();
+                            
                             editInput.removeEventListener('blur', saveEdit);
                             editInput.removeEventListener('keydown', handleEditKeydown);
                         };
@@ -558,9 +946,12 @@
                                 }
                             }
                             
-                            // 删除对话
+                                        // 删除对话
                             chats = chats.filter(c => c.id !== chat.id);
                             renderChatHistory();
+                            
+                            // 保存更改到localStorage
+                            saveChatsToLocalStorage();
                         }
                     });
                     
@@ -590,6 +981,9 @@
                     document.querySelectorAll('.chat-item').forEach(item => {
                         item.classList.toggle('active', item.dataset.id === chatId);
                     });
+                    
+                    // 保存当前聊天ID到localStorage
+                    localStorage.setItem('aemail_current_chat_id', currentChatId);
                 }
             }
             
@@ -626,6 +1020,9 @@
                 // 如果是AI消息且包含邮件内容，需要特殊处理
                 if (!isUser && content.includes('【邮件主题】')) {
                     messageDiv.innerHTML = formatEmailResponse(content);
+                } else if (!isUser) {
+                    // 使用Marked.js解析AI消息中的Markdown格式
+                    messageDiv.innerHTML = marked.parse(content);
                 } else {
                     messageDiv.textContent = content;
                 }
@@ -636,12 +1033,12 @@
             
             // 格式化邮件响应内容
             function formatEmailResponse(content) {
-                // 简单的格式化，将【】标记转换为HTML格式
-                let formattedContent = content
-                    .replace(/【([^】]+)】/g, '<strong>$1</strong>')
-                    .replace(/\n/g, '<br>');
+                // 先将【】标记转换为Markdown格式的加粗
+                let markdownContent = content
+                    .replace(/【([^】]+)】/g, '**$1**');
                 
-                return formattedContent;
+                // 使用Marked.js解析Markdown
+                return marked.parse(markdownContent);
             }
             
             // 显示正在输入指示器
@@ -663,75 +1060,272 @@
                 }
             }
             
-            // 调用知识库查询API
+            // 直接在前端搜索知识库内容
             async function queryKnowledge(question) {
                 try {
-                    const response = await fetch(`${API_BASE_URL}/api/query-knowledge`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ question: question })
-                    });
-                    
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
+                    // 检查是否是教师称谓查询
+                    const teacherMatch = question.match(/(\w+\.\w+|\w+)\s*的?\s*称谓/);
+                    if (teacherMatch) {
+                        let teacherName = teacherMatch[1].trim();
+                        // 清理教师姓名，移除可能的"的"字
+                        if (teacherName.endsWith('的')) {
+                            teacherName = teacherName.slice(0, -1);
+                        }
+                        
+                        // 在教师列表中搜索
+                        const lines = EMAIL_LIST_CONTENT.split('\n');
+                        for (const line of lines) {
+                            if (line.trim() && line.toLowerCase().includes(teacherName.toLowerCase())) {
+                                return line.trim();
+                            }
+                        }
+                        
+                        // 如果没有找到，返回所有可用的教师称谓列表
+                        const availableTeachers = lines.filter(line => line.trim() && line.includes('称谓：'));
+                        return `未找到教师 ${teacherName} 的称谓信息\n\n请检查教师姓名是否正确。\n\n可用的教师称谓列表：\n${availableTeachers.join('\n')}`;
                     }
                     
-                    const data = await response.json();
-                    return data.result || data.details || '抱歉，无法获取相关信息。';
+                    // 检查常见问题
+                    const commonKnowledge = getCommonKnowledgeAnswers();
+                    for (const [category, info] of Object.entries(commonKnowledge)) {
+                        if (info.keywords.some(keyword => question.includes(keyword))) {
+                            return info.answer;
+                        }
+                    }
+                    
+                    // 检查是否是邮件写作指南查询
+                    const guideKeywords = ["主题", "称呼", "开场", "正文", "结尾", "附件", "避雷"];
+                    if (guideKeywords.some(keyword => question.includes(keyword))) {
+                        let result = "根据邮件撰写指南：\n";
+                        let details = "";
+                        
+                        if (question.includes("主题")) {
+                            result += "- 主题栏应精准概括，格式为'【场景/身份】+核心事项+（可选：时间/紧急标识）'\n";
+                            details += "主题栏示例：'【本科生-2023级】关于MAT101课程缓考申请的咨询'\n";
+                        }
+                        
+                        if (question.includes("称呼")) {
+                            result += "- 对教师使用'Dear Prof. [姓氏]'或'Dear Dr. [姓氏]'\n";
+                            result += "- 对行政人员使用'Dear [部门名称] Team'或'Dear Ms./Mr. [姓氏]'\n";
+                            result += "- 对同学使用'Hi [名字]'\n";
+                        }
+                        
+                        if (question.includes("开场")) {
+                            result += "- 开场白应简洁寒暄+目的前置\n";
+                            details += "示例：'Dear Prof. Zhang, Hope you are well. I am [姓名]...'\n";
+                        }
+                        
+                        if (question.includes("正文")) {
+                            result += "- 正文应分点阐述，论据清晰\n";
+                            details += "- 咨询问题：先说明背景再明确提问\n";
+                            result += "- 申请事项：说明原因+具体需求+后续措施\n";
+                        }
+                        
+                        if (question.includes("结尾")) {
+                            result += "- 结尾应礼貌收尾+明确期待\n";
+                            details += "示例：'Thank you for your time and consideration...'\n";
+                        }
+                        
+                        if (question.includes("附件")) {
+                            result += "- 附件应标注清晰，主动提醒\n";
+                            details += "命名格式：'【姓名-身份】+文件用途+日期'\n";
+                        }
+                        
+                        return result + (details ? "\n" + details : "");
+                    }
+                    
+                    // 如果没有匹配到特定模式，调用API
+                    return await callQwenAPI(constructKnowledgePrompt(question));
                 } catch (error) {
                     console.error('知识库查询失败:', error);
                     return `查询失败: ${error.message}`;
                 }
             }
             
-            // 调用邮件生成API
-            async function generateEmail(userMessage, recipient = '') {
+            // 获取常见知识问题的答案
+            function getCommonKnowledgeAnswers() {
+                return {
+                    "邮件格式": {
+                        "keywords": ["邮件格式", "邮件结构", "怎么写邮件", "邮件模板"],
+                        "answer": "学术邮件的标准格式包括：\n1. 主题栏：【身份】+核心事项+（可选：时间/紧急标识）\n2. 称呼：根据收件人身份选择合适称谓\n3. 开场白：简洁寒暄+目的前置\n4. 正文：分点阐述，论据清晰\n5. 结尾：礼貌收尾+明确期待\n6. 落款：你的姓名+身份信息"
+                    },
+                    "教师称谓": {
+                        "keywords": ["教师称谓", "老师称呼", "怎么称呼老师"],
+                        "answer": "西浦教师的正确称谓格式为：\n- 对教授: Dear Prof. [姓氏]\n- 对博士/讲师: Dear Dr. [姓氏]\n- 对行政人员: Dear [部门名称] Team 或 Dear Ms./Mr. [姓氏]\n- 对同学: Hi [名字]\n\n您可以询问特定教师的称谓，例如：\"haochuan.jiang的称谓是什么\""
+                    },
+                    "邮件主题": {
+                        "keywords": ["邮件主题", "主题怎么写", "邮件标题"],
+                        "answer": "邮件主题栏应精准概括，一眼知意，格式建议为\"【场景/身份】+核心事项+（可选：时间/紧急标识）\"。\n\n错误示例：\"咨询问题\"\"请假\"（模糊不清）\n正确示例：\"【本科生-2023级】关于MAT101课程缓考申请的咨询\"\"【研究生】Thesis开题答辩时间调整申请（3月10日前回复）\""
+                    }
+                };
+            }
+            
+            // 构建知识库查询提示词
+            function constructKnowledgePrompt(question) {
+                return `
+                你是一个学术邮件知识库助手，请根据提供的知识库内容回答用户问题。
+
+                #知识库内容
+                1. 邮件撰写指南（避雷.docx）:
+                ${AVOID_THUNDER_CONTENT}
+
+                2. 教师称谓列表（邮件.docx）:
+                ${EMAIL_LIST_CONTENT}
+
+                #用户问题
+                ${question}
+
+                #要求
+                1. 只基于提供的知识库内容回答问题，不要编造不存在的信息
+                2. 如果知识库中没有相关信息，请如实告知用户
+                3. 回答要准确、简洁、专业
+
+                #输出格式
+                请直接回答问题，不需要特殊格式。
+                `;
+            }
+            
+            // 调用Qwen API
+            async function callQwenAPI(prompt, systemMessage="你是一个专业的学术邮件撰写助手，擅长根据用户需求生成得体、专业的邮件内容。") {
                 try {
-                    const response = await fetch(`${API_BASE_URL}/api/generate-email-from-chat`, {
+                    const headers = {
+                        "Authorization": `Bearer ${API_KEY}`,
+                        "Content-Type": "application/json"
+                    };
+                    
+                    const payload = {
+                        "model": "qwen-max",
+                        "messages": [
+                            {
+                                "role": "system",
+                                "content": systemMessage
+                            },
+                            {
+                                "role": "user",
+                                "content": prompt
+                            }
+                        ],
+                        "max_tokens": 2000,
+                        "temperature": 0.7
+                    };
+                    
+                    const response = await fetch(`${API_URL}/chat/completions`, {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ 
-                            message: userMessage,
-                            recipient: recipient
-                        })
+                        headers: headers,
+                        body: JSON.stringify(payload)
                     });
                     
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
                     }
                     
-                    const data = await response.json();
+                    const result = await response.json();
                     
-                    // 构建格式化的邮件内容
-                    let emailContent = '';
-                    
-                    if (data.chinese_subject && data.english_subject) {
-                        emailContent += `【邮件主题】\n`;
-                        emailContent += `中文主题：${data.chinese_subject}\n`;
-                        emailContent += `英文主题：${data.english_subject}\n\n`;
+                    // 提取生成的文本
+                    if ('choices' in result && result.choices.length > 0) {
+                        const content = result.choices[0].message.content;
+                        return content;
+                    } else {
+                        return "抱歉，无法生成内容。API返回格式异常，请检查API配置。";
                     }
+                } catch (error) {
+                    console.error('API调用失败:', error);
+                    return `API调用失败: ${error.message}`;
+                }
+            }
+            
+            // 调用邮件生成API
+            async function generateEmail(userMessage, recipient = '') {
+                try {
+                    // 构建邮件生成提示词
+                    const emailPrompt = constructEmailPrompt(userMessage, recipient);
                     
-                    if (data.chinese_email) {
-                        emailContent += `【中文邮件】\n${data.chinese_email}\n\n`;
-                    }
+                    // 调用Qwen API生成邮件
+                    const result = await callQwenAPI(emailPrompt);
                     
-                    if (data.english_email) {
-                        emailContent += `【英文邮件】\n${data.english_email}\n\n`;
-                    }
-                    
-                    if (data.tips) {
-                        emailContent += `【撰写建议】\n${data.tips}`;
-                    }
-                    
-                    return emailContent;
+                    // 解析邮件响应
+                    return formatEmailResponse(result);
                 } catch (error) {
                     console.error('邮件生成失败:', error);
                     return `邮件生成失败: ${error.message}`;
                 }
+            }
+            
+            // 构建邮件生成提示词
+            function constructEmailPrompt(userMessage, recipient = '') {
+                let prompt = `
+                #任务
+                你是一个专业的学术邮件撰写助手，请根据用户的需求，生成一封得体、专业的学术邮件。请同时生成中英文版本。
+
+                #邮件撰写指南
+                ${AVOID_THUNDER_CONTENT}
+
+                #教师称谓参考
+                ${EMAIL_LIST_CONTENT}
+
+                #用户需求
+                ${userMessage}
+`;
+                
+                // 如果指定了收件人，添加到提示中
+                if (recipient) {
+                    prompt += `
+                #收件人
+                ${recipient}
+`;
+                }
+                
+                prompt += `
+                #输出格式
+                请按照以下格式输出：
+                
+                【邮件主题】
+                中文主题：[中文主题]
+                英文主题：[英文主题]
+                
+                【中文邮件】
+                [完整的中文邮件内容，包括称呼、正文和落款]
+                
+                【英文邮件】
+                [完整的英文邮件内容，包括称呼、正文和落款]
+                
+                【撰写建议】
+                [针对用户邮件的改进建议或注意事项]
+                `;
+                
+                return prompt;
+            }
+            
+            // 格式化邮件响应
+            function formatEmailResponse(response) {
+                let emailContent = '';
+                
+                // 提取邮件主题
+                const subjectMatch = response.match(/【邮件主题】[\s\S]*?(?=【中文邮件】|$)/i);
+                if (subjectMatch) {
+                    emailContent += subjectMatch[0].trim() + '\n\n';
+                }
+                
+                // 提取中文邮件
+                const chineseEmailMatch = response.match(/【中文邮件】[\s\S]*?(?=【英文邮件】|$)/i);
+                if (chineseEmailMatch) {
+                    emailContent += chineseEmailMatch[0].trim() + '\n\n';
+                }
+                
+                // 提取英文邮件
+                const englishEmailMatch = response.match(/【英文邮件】[\s\S]*?(?=【撰写建议】|$)/i);
+                if (englishEmailMatch) {
+                    emailContent += englishEmailMatch[0].trim() + '\n\n';
+                }
+                
+                // 提取撰写建议
+                const tipsMatch = response.match(/【撰写建议】[\s\S]*/i);
+                if (tipsMatch) {
+                    emailContent += tipsMatch[0].trim();
+                }
+                
+                // 如果没有匹配到任何格式化内容，直接返回原始响应
+                return emailContent || response;
             }
             
             // 处理AI响应
@@ -770,6 +1364,9 @@
                             currentChatTitle.textContent = newTitle;
                             renderChatHistory();
                         }
+                        
+                        // 保存到localStorage
+                        saveChatsToLocalStorage();
                     }
                 } catch (error) {
                     console.error('AI响应处理失败:', error);
@@ -778,6 +1375,13 @@
                     
                     const errorMessage = `抱歉，处理您的请求时出现错误: ${error.message}`;
                     addMessage(errorMessage, false);
+                    
+                    // 即使出错也保存用户消息
+                    if (currentChat) {
+                        currentChat.messages.push({ type: 'user', content: userMessage });
+                        currentChat.messages.push({ type: 'ai', content: errorMessage });
+                        saveChatsToLocalStorage();
+                    }
                 }
             }
             
@@ -802,21 +1406,219 @@
                     }
                 });
                 
+                // 保存当前查询类型到localStorage
+                localStorage.setItem('aemail_query_type', currentQueryType);
+                
                 // 根据类型更新欢迎信息
+                updateWelcomeMessage();
+            }
+            
+            // 更新欢迎信息
+            function updateWelcomeMessage() {
                 const welcomeMessage = document.querySelector('.welcome-message');
                 if (welcomeMessage) {
-                    if (type === 'knowledge') {
-                        welcomeMessage.innerHTML = `
-                            <h1>知识库查询模式</h1>
-                            <p>我可以帮助您查询邮件相关的知识库信息，包括教师称谓、邮件写作指南等。请随时向我提问！</p>
-                        `;
-                    } else {
-                        welcomeMessage.innerHTML = `
-                            <h1>邮件撰写模式</h1>
-                            <p>我可以帮助您撰写专业的学术邮件，包括咨询、申请、请求等类型。请告诉我您的需求！</p>
-                        `;
+                    if (currentQueryType === 'knowledge') {
+                        if (currentLanguage === 'zh') {
+                            welcomeMessage.innerHTML = `
+                                <h1>欢迎使用 NEXUS<span style="color: var(--primary-color);">MAIL</span> 助手</h1>
+                                <p>您可以向我询问有关学术邮件写作的问题，获取专业指导和建议</p>
+                                <div class="welcome-examples">
+                                    <div class="example-item">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" stroke-width="2" style="margin-right: 8px;">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                        </svg>
+                                        如何称呼教授？
+                                    </div>
+                                    <div class="example-item">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" stroke-width="2" style="margin-right: 8px;">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                        </svg>
+                                        邮件正文应该包含哪些内容？
+                                    </div>
+                                    <div class="example-item">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" stroke-width="2" style="margin-right: 8px;">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                        </svg>
+                                        如何写邮件主题？
+                                    </div>
+                                </div>
+                            `;
+                        } else { // English
+                            welcomeMessage.innerHTML = `
+                                <h1>Welcome to NEXUS<span style="color: var(--primary-color);">MAIL</span> Assistant</h1>
+                                <p>You can ask me questions about academic email writing for professional guidance and advice</p>
+                                <div class="welcome-examples">
+                                    <div class="example-item">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" stroke-width="2" style="margin-right: 8px;">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                        </svg>
+                                        How to address a professor?
+                                    </div>
+                                    <div class="example-item">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" stroke-width="2" style="margin-right: 8px;">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                        </svg>
+                                        What should be included in an email body?
+                                    </div>
+                                    <div class="example-item">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" stroke-width="2" style="margin-right: 8px;">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                        </svg>
+                                        How to write an email subject line?
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    } else { // Email mode
+                        if (currentLanguage === 'zh') {
+                            welcomeMessage.innerHTML = `
+                                <h1>邮件撰写模式</h1>
+                                <p>请告诉我您想要撰写的邮件内容和目的，我会为您生成专业的中英文邮件</p>
+                                <div class="welcome-examples">
+                                    <div class="example-item">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" stroke-width="2" style="margin-right: 8px;">
+                                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                                            <polyline points="22,6 12,13 2,6"></polyline>
+                                        </svg>
+                                        请帮我写一封询问教授科研机会的邮件
+                                    </div>
+                                    <div class="example-item">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" stroke-width="2" style="margin-right: 8px;">
+                                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                                            <polyline points="22,6 12,13 2,6"></polyline>
+                                        </svg>
+                                        我想写一封请假邮件给导师
+                                    </div>
+                                    <div class="example-item">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" stroke-width="2" style="margin-right: 8px;">
+                                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                                            <polyline points="22,6 12,13 2,6"></polyline>
+                                        </svg>
+                                        帮我写一封感谢教授的推荐信邮件
+                                    </div>
+                                </div>
+                            `;
+                        } else { // English
+                            welcomeMessage.innerHTML = `
+                                <h1>Email Composition Mode</h1>
+                                <p>Please tell me the content and purpose of the email you want to write, and I will generate a professional bilingual email for you</p>
+                                <div class="welcome-examples">
+                                    <div class="example-item">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" stroke-width="2" style="margin-right: 8px;">
+                                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                                            <polyline points="22,6 12,13 2,6"></polyline>
+                                        </svg>
+                                        Please help me write an email to inquire about research opportunities with a professor
+                                    </div>
+                                    <div class="example-item">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" stroke-width="2" style="margin-right: 8px;">
+                                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                                            <polyline points="22,6 12,13 2,6"></polyline>
+                                        </svg>
+                                        I want to write a leave request email to my supervisor
+                                    </div>
+                                    <div class="example-item">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" stroke-width="2" style="margin-right: 8px;">
+                                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                                            <polyline points="22,6 12,13 2,6"></polyline>
+                                        </svg>
+                                        Help me write a thank-you email to a professor for a recommendation letter
+                                    </div>
+                                </div>
+                            `;
+                        }
                     }
+
+                    // Add click event listeners to example queries
+                    const exampleItems = document.querySelectorAll('.example-item');
+                    exampleItems.forEach(item => {
+                        item.addEventListener('click', () => {
+                            const messageInput = document.getElementById('message-input');
+                            messageInput.value = item.textContent.trim();
+                            messageInput.focus();
+                        });
+                    });
                 }
+            }
+            
+            // 设置语言
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // 更新语言按钮状态
+                document.querySelectorAll('.language-btn').forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+                
+                // 保存当前语言到localStorage
+                localStorage.setItem('aemail_language', currentLanguage);
+                
+                // 更新界面文本
+                updateInterfaceText();
+            }
+            
+            // 更新界面文本
+            function updateInterfaceText() {
+                // 更新标题
+                document.title = currentLanguage === 'zh' ? 'AI学术邮件助手' : 'AI Academic Email Assistant';
+                
+                // 更新新对话按钮
+                document.getElementById('new-chat-btn').innerHTML = `
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg> ${currentLanguage === 'zh' ? '新对话' : 'NEW CONVERSATION'}
+                `;
+                
+                // 更新查询类型按钮
+                const knowledgeBtn = document.querySelector('.query-type-btn[data-type="knowledge"]');
+                const emailBtn = document.querySelector('.query-type-btn[data-type="email"]');
+                
+                if (knowledgeBtn) {
+                    knowledgeBtn.innerHTML = `
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 5px;">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                        ${currentLanguage === 'zh' ? '知识库查询' : 'Knowledge Query'}
+                    `;
+                }
+                
+                if (emailBtn) {
+                    emailBtn.innerHTML = `
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 5px;">
+                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                            <polyline points="22,6 12,13 2,6"></polyline>
+                        </svg>
+                        ${currentLanguage === 'zh' ? '邮件撰写' : 'Email Writing'}
+                    `;
+                }
+                
+                // 更新输入框占位符
+                document.getElementById('message-input').placeholder = currentLanguage === 'zh' ? '输入您的问题或需求...' : 'Enter your question or request...';
+                
+                // 更新输入提示
+                document.querySelector('.input-hint').textContent = currentLanguage === 'zh' ? 'Enter 发送 / Shift+Enter 换行' : 'Enter to send / Shift+Enter for new line';
+                
+                // 更新欢迎信息
+                updateWelcomeMessage();
             }
             
             // 事件监听器
@@ -835,10 +1637,18 @@
                 });
             });
             
+            // 语言切换按钮事件监听
+            document.querySelectorAll('.language-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    setLanguage(this.dataset.lang);
+                });
+            });
+            
             newChatBtn.addEventListener('click', createNewChat);
             
             // 初始化
             initExampleData();
+            setLanguage(currentLanguage); // 初始化语言设置
         });
     </script>
 </body>
