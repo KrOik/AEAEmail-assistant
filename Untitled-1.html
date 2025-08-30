@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI学术邮件助手</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2980b9;
+            --light-bg: #f5f7fa;
+            --dark-text: #2c3e50;
+            --light-text: #7f8c8d;
+            --user-msg-bg: #3498db;
+            --ai-msg-bg: #ecf0f1;
+            --sidebar-bg: #2c3e50;
+            --sidebar-text: #ecf0f1;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--light-bg);
+            color: var(--dark-text);
+            height: 100vh;
+            display: flex;
+        }
+        
+        .sidebar {
+            width: 300px;
+            background-color: var(--sidebar-bg);
+            color: var(--sidebar-text);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        
+        .logo {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 30px;
+            text-align: center;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .new-chat-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .new-chat-btn i {
+            margin-right: 8px;
+        }
+        
+        .chat-history {
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+        
+        .chat-item {
+            padding: 12px;
+            border-radius: 5px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+        }
+        
+        .chat-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .chat-item.active {
+            background-color: var(--primary-color);
+        }
+        
+        .chat-item-content {
+            flex-grow: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .chat-item-date {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-left: 10px;
+            flex-shrink: 0;
+        }
+        
+        .chat-item-actions {
+            display: none;
+            position: absolute;
+            right: 10px;
+            background-color: var(--sidebar-bg);
+            border-radius: 4px;
+            padding: 4px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        
+        .chat-item:hover .chat-item-actions {
+            display: flex;
+        }
+        
+        .chat-item-actions button {
+            background: none;
+            border: none;
+            color: var(--sidebar-text);
+            cursor: pointer;
+            padding: 4px 6px;
+            font-size: 14px;
+        }
+        
+        .chat-item-edit {
+            display: none;
+            width: 100%;
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 8px;
+            border-radius: 4px;
+        }
+        
+        .chat-item.editing .chat-item-content {
+            display: none;
+        }
+        
+        .chat-item.editing .chat-item-edit {
+            display: block;
+        }
+        
+        .chat-item.editing .chat-item-actions {
+            display: none;
+        }
+        
+        .main-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .chat-header {
+            padding: 20px;
+            border-bottom: 1px solid #ddd;
+            background-color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .current-chat-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .query-type-selector {
+            display: flex;
+            background-color: var(--light-bg);
+            border-radius: 20px;
+            padding: 4px;
+        }
+        
+        .query-type-btn {
+            padding: 8px 16px;
+            border: none;
+            background: none;
+            border-radius: 16px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .query-type-btn.active {
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .chat-messages {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .welcome-message {
+            text-align: center;
+            margin: auto;
+            max-width: 600px;
+        }
+        
+        .welcome-message h1 {
+            font-size: 28px;
+            margin-bottom: 16px;
+            color: var(--dark-text);
+        }
+        
+        .welcome-message p {
+            font-size: 16px;
+            color: var(--light-text);
+            line-height: 1.5;
+        }
+        
+        .message {
+            max-width: 80%;
+            padding: 16px;
+            border-radius: 18px;
+            margin-bottom: 16px;
+            position: relative;
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+        
+        .user-message {
+            background-color: var(--user-msg-bg);
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+        
+        .ai-message {
+            background-color: var(--ai-msg-bg);
+            color: var(--dark-text);
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+        
+        .chat-input-container {
+            padding: 20px;
+            background-color: white;
+            border-top: 1px solid #ddd;
+        }
+        
+        .chat-input-wrapper {
+            display: flex;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 8px;
+            background-color: white;
+        }
+        
+        .chat-input {
+            flex-grow: 1;
+            border: none;
+            padding: 12px;
+            font-size: 16px;
+            resize: none;
+            height: 60px;
+            max-height: 120px;
+            outline: none;
+        }
+        
+        .send-button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 0 20px;
+            cursor: pointer;
+            align-self: flex-end;
+            font-weight: 600;
+        }
+        
+        .send-button:hover {
+            background-color: var(--secondary-color);
+        }
+        
+        .send-button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .input-hint {
+            text-align: center;
+            font-size: 12px;
+            color: var(--light-text);
+            margin-top: 8px;
+        }
+        
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            color: var(--light-text);
+            margin-top: 10px;
+        }
+        
+        .typing-dots {
+            display: flex;
+            margin-left: 10px;
+        }
+        
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            background-color: var(--light-text);
+            border-radius: 50%;
+            margin: 0 2px;
+            animation: typingAnimation 1.4s infinite ease-in-out;
+        }
+        
+        .typing-dot:nth-child(1) {
+            animation-delay: 0s;
+        }
+        
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes typingAnimation {
+            0%, 60%, 100% {
+                transform: translateY(0);
+            }
+            30% {
+                transform: translateY(-5px);
+            }
+        }
+        
+        @media (max-width: 900px) {
+            .sidebar {
+                width: 240px;
+            }
+            
+            .message {
+                max-width: 90%;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                height: auto;
+                max-height: 200px;
+                overflow-y: auto;
+            }
+            
+            .chat-history {
+                display: flex;
+                overflow-x: auto;
+                flex-wrap: nowrap;
+            }
+            
+            .chat-item {
+                min-width: 150px;
+                margin-right: 10px;
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .chat-item-date {
+                margin-left: 0;
+                margin-top: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo">AI学术邮件助手</div>
+        <button class="new-chat-btn" id="new-chat-btn">
+            <i>+</i> 新对话
+        </button>
+        <div class="chat-history" id="chat-history">
+            <!-- 聊天历史将通过JS动态生成 -->
+        </div>
+    </div>
+    
+    <div class="main-container">
+        <div class="chat-header">
+            <div class="current-chat-title" id="current-chat-title">新对话</div>
+            <div class="query-type-selector">
+                <button class="query-type-btn active" data-type="knowledge">知识库查询</button>
+                <button class="query-type-btn" data-type="email">邮件撰写</button>
+            </div>
+        </div>
+        
+        <div class="chat-messages" id="chat-messages">
+            <div class="welcome-message">
+                <h1>您好，我是您的AI邮件助手</h1>
+                <p>我可以帮助您查询邮件相关的知识库信息或撰写专业的学术邮件，请随时向我提问！</p>
+            </div>
+        </div>
+        
+        <div class="chat-input-container">
+            <div class="chat-input-wrapper">
+                <textarea class="chat-input" id="message-input" placeholder="输入您的问题..."></textarea>
+                <button class="send-button" id="send-button">发送</button>
+            </div>
+            <div class="input-hint">Enter 发送 / Shift+Enter 换行</div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const chatHistory = document.getElementById('chat-history');
+            const chatMessages = document.getElementById('chat-messages');
+            const messageInput = document.getElementById('message-input');
+            const sendButton = document.getElementById('send-button');
+            const newChatBtn = document.getElementById('new-chat-btn');
+            const currentChatTitle = document.getElementById('current-chat-title');
+            const queryTypeButtons = document.querySelectorAll('.query-type-btn');
+            
+            let chats = [];
+            let currentChatId = null;
+            let currentQueryType = 'knowledge'; // 默认知识库查询模式
+            
+            // API配置
+            const API_BASE_URL = 'http://localhost:5000';
+            
+            // 初始化示例数据
+            function initExampleData() {
+                chats = [
+                    {
+                        id: '1',
+                        title: '部件领导者',
+                        date: '2025-06-25',
+                        messages: [
+                            { type: 'ai', content: '您好！我是您的AI助手，可以帮助撰写学术邮件或查询邮件相关的知识库信息。您想了解什么？' }
+                        ]
+                    },
+                    {
+                        id: '2',
+                        title: '教师称谓查询',
+                        date: '2025-06-24',
+                        messages: [
+                            { type: 'ai', content: '根据知识库，西浦教师的正确称谓格式为：\n- 对教授: Dear Prof. [姓氏]\n- 对博士/讲师: Dear Dr. [姓氏]\n- 对行政人员: Dear [部门名称] Team 或 Dear Ms./Mr. [姓氏]\n- 对同学: Hi [名字]\n\n您可以询问特定教师的称谓，例如："haochuan.jiang的称谓是什么"' },
+                            { type: 'user', content: 'haochuan.jiang的称谓是什么' },
+                            { type: 'ai', content: '根据知识库，haochuan.jiang 的称谓是: Dear Dr. Jiang' }
+                        ]
+                    }
+                ];
+                
+                // 添加一个新对话
+                createNewChat();
+                
+                // 渲染聊天历史
+                renderChatHistory();
+            }
+            
+            // 创建新对话
+            function createNewChat() {
+                const newChat = {
+                    id: Date.now().toString(),
+                    title: '新对话',
+                    date: new Date().toLocaleDateString(),
+                    messages: []
+                };
+                
+                chats.unshift(newChat);
+                currentChatId = newChat.id;
+                
+                // 清空消息区域并显示欢迎信息
+                chatMessages.innerHTML = `
+                    <div class="welcome-message">
+                        <h1>您好，我是您的AI邮件助手</h1>
+                        <p>我可以帮助您查询邮件相关的知识库信息或撰写专业的学术邮件，请随时向我提问！</p>
+                    </div>
+                `;
+                
+                // 更新当前聊天标题
+                currentChatTitle.textContent = newChat.title;
+                
+                // 重新渲染聊天历史
+                renderChatHistory();
+            }
+            
+            // 渲染聊天历史
+            function renderChatHistory() {
+                chatHistory.innerHTML = '';
+                
+                chats.forEach(chat => {
+                    const isActive = chat.id === currentChatId;
+                    const chatItem = document.createElement('div');
+                    chatItem.className = `chat-item ${isActive ? 'active' : ''}`;
+                    chatItem.dataset.id = chat.id;
+                    
+                    chatItem.innerHTML = `
+                        <div class="chat-item-content">${chat.title}</div>
+                        <div class="chat-item-date">${chat.date}</div>
+                        <input type="text" class="chat-item-edit" value="${chat.title}">
+                        <div class="chat-item-actions">
+                            <button class="edit-btn" title="编辑">✎</button>
+                            <button class="delete-btn" title="删除">×</button>
+                        </div>
+                    `;
+                    
+                    chatItem.querySelector('.edit-btn').addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        chatItem.classList.add('editing');
+                        
+                        const editInput = chatItem.querySelector('.chat-item-edit');
+                        editInput.focus();
+                        
+                        // 保存编辑
+                        const saveEdit = function() {
+                            chat.title = editInput.value.trim() || '未命名对话';
+                            chatItem.querySelector('.chat-item-content').textContent = chat.title;
+                            chatItem.classList.remove('editing');
+                            
+                            if (chat.id === currentChatId) {
+                                currentChatTitle.textContent = chat.title;
+                            }
+                            
+                            editInput.removeEventListener('blur', saveEdit);
+                            editInput.removeEventListener('keydown', handleEditKeydown);
+                        };
+                        
+                        // 处理按键事件
+                        const handleEditKeydown = function(e) {
+                            if (e.key === 'Enter') {
+                                saveEdit();
+                            } else if (e.key === 'Escape') {
+                                chatItem.classList.remove('editing');
+                                editInput.value = chat.title;
+                                editInput.removeEventListener('blur', saveEdit);
+                                editInput.removeEventListener('keydown', handleEditKeydown);
+                            }
+                        };
+                        
+                        editInput.addEventListener('blur', saveEdit);
+                        editInput.addEventListener('keydown', handleEditKeydown);
+                    });
+                    
+                    chatItem.querySelector('.delete-btn').addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        if (confirm('确定要删除这个对话吗？')) {
+                            // 如果是当前对话，需要切换到另一个对话
+                            if (chat.id === currentChatId) {
+                                const otherChat = chats.find(c => c.id !== chat.id);
+                                if (otherChat) {
+                                    switchChat(otherChat.id);
+                                } else {
+                                    createNewChat();
+                                }
+                            }
+                            
+                            // 删除对话
+                            chats = chats.filter(c => c.id !== chat.id);
+                            renderChatHistory();
+                        }
+                    });
+                    
+                    chatItem.addEventListener('click', function() {
+                        if (!chatItem.classList.contains('editing')) {
+                            switchChat(chat.id);
+                        }
+                    });
+                    
+                    chatHistory.appendChild(chatItem);
+                });
+            }
+            
+            // 切换到指定聊天
+            function switchChat(chatId) {
+                currentChatId = chatId;
+                const chat = chats.find(c => c.id === chatId);
+                
+                if (chat) {
+                    // 更新当前聊天标题
+                    currentChatTitle.textContent = chat.title;
+                    
+                    // 渲染聊天消息
+                    renderChatMessages(chat.messages);
+                    
+                    // 更新聊天历史的高亮显示
+                    document.querySelectorAll('.chat-item').forEach(item => {
+                        item.classList.toggle('active', item.dataset.id === chatId);
+                    });
+                }
+            }
+            
+            // 渲染聊天消息
+            function renderChatMessages(messages) {
+                chatMessages.innerHTML = '';
+                
+                if (messages.length === 0) {
+                    chatMessages.innerHTML = `
+                        <div class="welcome-message">
+                            <h1>您好，我是您的AI邮件助手</h1>
+                            <p>我可以帮助您查询邮件相关的知识库信息或撰写专业的学术邮件，请随时向我提问！</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                messages.forEach(message => {
+                    addMessage(message.content, message.type === 'user');
+                });
+            }
+            
+            // 添加消息到聊天窗口
+            function addMessage(content, isUser = false) {
+                const welcomeMessage = document.querySelector('.welcome-message');
+                if (welcomeMessage) {
+                    welcomeMessage.style.display = 'none';
+                }
+                
+                const messageDiv = document.createElement('div');
+                messageDiv.classList.add('message');
+                messageDiv.classList.add(isUser ? 'user-message' : 'ai-message');
+                
+                // 如果是AI消息且包含邮件内容，需要特殊处理
+                if (!isUser && content.includes('【邮件主题】')) {
+                    messageDiv.innerHTML = formatEmailResponse(content);
+                } else {
+                    messageDiv.textContent = content;
+                }
+                
+                chatMessages.appendChild(messageDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+            
+            // 格式化邮件响应内容
+            function formatEmailResponse(content) {
+                // 简单的格式化，将【】标记转换为HTML格式
+                let formattedContent = content
+                    .replace(/【([^】]+)】/g, '<strong>$1</strong>')
+                    .replace(/\n/g, '<br>');
+                
+                return formattedContent;
+            }
+            
+            // 显示正在输入指示器
+            function showTypingIndicator() {
+                const indicatorDiv = document.createElement('div');
+                indicatorDiv.classList.add('typing-indicator');
+                indicatorDiv.id = 'typing-indicator';
+                indicatorDiv.innerHTML = 'AI正在思考...<div class="typing-dots"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>';
+                
+                chatMessages.appendChild(indicatorDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+            
+            // 隐藏正在输入指示器
+            function hideTypingIndicator() {
+                const indicator = document.getElementById('typing-indicator');
+                if (indicator) {
+                    indicator.remove();
+                }
+            }
+            
+            // 调用知识库查询API
+            async function queryKnowledge(question) {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/api/query-knowledge`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ question: question })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    return data.result || data.details || '抱歉，无法获取相关信息。';
+                } catch (error) {
+                    console.error('知识库查询失败:', error);
+                    return `查询失败: ${error.message}`;
+                }
+            }
+            
+            // 调用邮件生成API
+            async function generateEmail(userMessage, recipient = '') {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/api/generate-email-from-chat`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ 
+                            message: userMessage,
+                            recipient: recipient
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    
+                    // 构建格式化的邮件内容
+                    let emailContent = '';
+                    
+                    if (data.chinese_subject && data.english_subject) {
+                        emailContent += `【邮件主题】\n`;
+                        emailContent += `中文主题：${data.chinese_subject}\n`;
+                        emailContent += `英文主题：${data.english_subject}\n\n`;
+                    }
+                    
+                    if (data.chinese_email) {
+                        emailContent += `【中文邮件】\n${data.chinese_email}\n\n`;
+                    }
+                    
+                    if (data.english_email) {
+                        emailContent += `【英文邮件】\n${data.english_email}\n\n`;
+                    }
+                    
+                    if (data.tips) {
+                        emailContent += `【撰写建议】\n${data.tips}`;
+                    }
+                    
+                    return emailContent;
+                } catch (error) {
+                    console.error('邮件生成失败:', error);
+                    return `邮件生成失败: ${error.message}`;
+                }
+            }
+            
+            // 处理AI响应
+            async function handleAIResponse(userMessage) {
+                showTypingIndicator();
+                sendButton.disabled = true;
+                
+                try {
+                    let aiResponse = "";
+                    const currentChat = chats.find(c => c.id === currentChatId);
+                    
+                    if (currentQueryType === 'knowledge') {
+                        // 知识库查询模式
+                        aiResponse = await queryKnowledge(userMessage);
+                    } else {
+                        // 邮件撰写模式
+                        aiResponse = await generateEmail(userMessage);
+                    }
+                    
+                    // 隐藏输入指示器
+                    hideTypingIndicator();
+                    sendButton.disabled = false;
+                    
+                    // 添加AI响应
+                    addMessage(aiResponse, false);
+                    
+                    // 保存到当前聊天
+                    if (currentChat) {
+                        currentChat.messages.push({ type: 'user', content: userMessage });
+                        currentChat.messages.push({ type: 'ai', content: aiResponse });
+                        
+                        // 如果还是默认标题，根据内容生成新标题
+                        if (currentChat.title === '新对话' || currentChat.title === '未命名对话') {
+                            const newTitle = userMessage.length > 20 ? userMessage.substring(0, 20) + '...' : userMessage;
+                            currentChat.title = newTitle;
+                            currentChatTitle.textContent = newTitle;
+                            renderChatHistory();
+                        }
+                    }
+                } catch (error) {
+                    console.error('AI响应处理失败:', error);
+                    hideTypingIndicator();
+                    sendButton.disabled = false;
+                    
+                    const errorMessage = `抱歉，处理您的请求时出现错误: ${error.message}`;
+                    addMessage(errorMessage, false);
+                }
+            }
+            
+            // 发送消息处理
+            function handleSendMessage() {
+                const message = messageInput.value.trim();
+                if (message) {
+                    addMessage(message, true);
+                    messageInput.value = '';
+                    handleAIResponse(message);
+                }
+            }
+            
+            // 设置当前查询类型
+            function setQueryType(type) {
+                currentQueryType = type;
+                queryTypeButtons.forEach(btn => {
+                    if (btn.dataset.type === type) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+                
+                // 根据类型更新欢迎信息
+                const welcomeMessage = document.querySelector('.welcome-message');
+                if (welcomeMessage) {
+                    if (type === 'knowledge') {
+                        welcomeMessage.innerHTML = `
+                            <h1>知识库查询模式</h1>
+                            <p>我可以帮助您查询邮件相关的知识库信息，包括教师称谓、邮件写作指南等。请随时向我提问！</p>
+                        `;
+                    } else {
+                        welcomeMessage.innerHTML = `
+                            <h1>邮件撰写模式</h1>
+                            <p>我可以帮助您撰写专业的学术邮件，包括咨询、申请、请求等类型。请告诉我您的需求！</p>
+                        `;
+                    }
+                }
+            }
+            
+            // 事件监听器
+            sendButton.addEventListener('click', handleSendMessage);
+            
+            messageInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendMessage();
+                }
+            });
+            
+            queryTypeButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    setQueryType(this.dataset.type);
+                });
+            });
+            
+            newChatBtn.addEventListener('click', createNewChat);
+            
+            // 初始化
+            initExampleData();
+        });
+    </script>
+</body>
+</html>
