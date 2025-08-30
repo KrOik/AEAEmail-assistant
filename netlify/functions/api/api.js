@@ -1,8 +1,20 @@
 // Netlify函数处理API调用
-// 导入fetch API，在Node.js环境中需要显式导入
-const fetch = require('node-fetch');
+// 使用ESM模块语法导入fetch API
+import fetch from 'node-fetch';
+import { setGlobalDispatcher, ProxyAgent } from 'undici';
 
-exports.handler = async function(event, context) {
+// 设置全局超时时间更长的代理
+const agent = new ProxyAgent({
+  connect: {
+    timeout: 60000 // 60秒连接超时
+  },
+  request: {
+    timeout: 60000 // 60秒请求超时
+  }
+});
+setGlobalDispatcher(agent);
+
+export const handler = async function(event, context) {
   // 设置CORS头
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -80,64 +92,92 @@ exports.handler = async function(event, context) {
     console.log('调用API:', apiUrl);
     console.log('请求体:', JSON.stringify(requestBody));
     
-    const response = await fetch(apiUrl, requestOptions);
+    // 添加超时控制
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30秒超时
     
-    // 检查响应状态
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('API响应错误:', response.status, errorText);
-      return {
-        statusCode: response.status,
-        headers,
-        body: JSON.stringify({ 
-          error: `API响应错误: ${response.status}`, 
-          details: errorText 
-        })
-      };
-    }
-    
-    // 解析JSON响应
-    const responseText = await response.text();
-    console.log('API响应:', responseText);
-    
-    let data;
     try {
-      data = JSON.parse(responseText);
-    } catch (parseError) {
-      console.error('JSON解析错误:', parseError, '原始响应:', responseText);
+      requestOptions.signal = controller.signal;
+      const response = await fetch(apiUrl, requestOptions);
+      clearTimeout(timeoutId); // 清除超时计时器
+    
+      // 检查响应状态
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('API响应错误:', response.status, errorText);
+        return {
+          statusCode: response.status,
+          headers,
+          body: JSON.stringify({ 
+            error: `API响应错误: ${response.status}`, 
+            details: errorText 
+          })
+        };
+      }
+      
+      // 解析JSON响应
+      const responseText = await response.text();
+      console.log('API响应:', responseText);
+      
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('JSON解析错误:', parseError, '原始响应:', responseText);
+        return {
+          statusCode: 500,
+          headers,
+          body: JSON.stringify({ 
+            error: `JSON解析错误: ${parseError.message}`, 
+            rawResponse: responseText.substring(0, 500) // 限制长度
+          })
+        };
+      }
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      console.error('API请求错误:', fetchError);
+      
+      // 处理超时错误
+      if (fetchError.name === 'AbortError') {
+        return {
+          statusCode: 504,
+          headers,
+          body: JSON.stringify({ 
+            error: '请求超时', 
+            details: '服务器在规定时间内未响应，请稍后重试'
+          })
+        };
+      }
+
+      // 返回API响应
       return {
-        statusCode: 500,
+        statusCode: 200,
         headers,
-        body: JSON.stringify({ 
-          error: `JSON解析错误: ${parseError.message}`, 
-          rawResponse: responseText.substring(0, 500) // 限制长度
-        })
+        body: JSON.stringify(data)
       };
     }
-
-    // 返回API响应
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify(data)
-    };
   } catch (error) {
     console.error('API调用错误:', error);
     
     // 提供更详细的错误信息
     let errorDetails = {
       message: error.message,
-      type: error.type || 'unknown'
+      type: error.type || error.name || 'unknown'
     };
     
     // 如果是网络错误，添加更多信息
-    if (error.name === 'FetchError') {
+    if (error.name === 'FetchError' || error.name === 'TypeError') {
       errorDetails.url = apiUrl;
       errorDetails.code = error.code;
     }
     
+    // 处理punycode相关错误
+    if (error.message && error.message.includes('punycode')) {
+      console.warn('检测到punycode弃用警告，这是一个Node.js内部警告，不影响功能');
+    }
+    
     return {
-      statusCode: 500,
+      statusCode: 504, // 使用504表示网关超时
       headers,
       body: JSON.stringify({ 
         error: `API调用失败: ${error.message}`,
