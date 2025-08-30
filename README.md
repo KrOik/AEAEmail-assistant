@@ -38,10 +38,10 @@
 3. 创建`.env`文件，配置API密钥：
    ```
    QWEN_API_KEY=你的API密钥
-   API_URL=https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions
+   API_URL=阿里云百炼通义千问的OpenAI兼容接口URL
    ```
    
-   > **注意**：API_URL必须是完整的API端点URL，确保使用`https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions`格式，这是阿里云百炼通义千问的OpenAI兼容接口
+   > **注意**：API_URL必须是完整的API端点URL，请使用阿里云百炼通义千问的OpenAI兼容接口地址（具体URL请参考阿里云官方文档）
 
 ### Netlify部署
 
@@ -52,9 +52,9 @@
    - 添加以下环境变量：
      ```
       QWEN_API_KEY=你的API密钥
-      API_URL=https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions
+      API_URL=阿里云百炼通义千问的OpenAI兼容接口URL
       ```
-    - **重要**：确保API_URL是完整的API端点URL，必须使用阿里云百炼的OpenAI兼容接口格式`https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions`，否则API调用会失败
+    - **重要**：确保API_URL是完整的API端点URL，必须使用阿里云百炼的OpenAI兼容接口格式（具体URL请参考阿里云官方文档），否则API调用会失败
      
 
 3. 部署完成后，访问以下页面进行测试：

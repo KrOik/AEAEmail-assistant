@@ -45,8 +45,8 @@ exports.handler = async function(event, context) {
     }
     
     // 确保API_URL是完整的端点URL
-    // 根据官方文档，正确的URL格式为：https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions
-    let apiUrl = process.env.API_URL || 'https://dashscope.aliyuncs.com/compatible-mode/v1';
+    // 根据官方文档，正确的URL格式为阿里云百炼通义千问的OpenAI兼容接口URL
+    let apiUrl = process.env.API_URL || '阿里云百炼通义千问的OpenAI兼容接口基础URL';
     
     // 确保URL以/chat/completions结尾
     if (!apiUrl.endsWith('/chat/completions')) {
@@ -60,7 +60,7 @@ exports.handler = async function(event, context) {
       }
       // 其他情况，使用默认完整URL
       else {
-        apiUrl = 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions';
+        apiUrl = '阿里云百炼通义千问的OpenAI兼容接口完整URL';
       }
     }
     
