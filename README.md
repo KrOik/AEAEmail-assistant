@@ -38,8 +38,10 @@
 3. 创建`.env`文件，配置API密钥：
    ```
    QWEN_API_KEY=你的API密钥
-   API_URL=你的端点
+   API_URL=https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions
    ```
+   
+   > **注意**：API_URL必须是完整的API端点URL，确保使用`https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions`格式，这是阿里云百炼通义千问的OpenAI兼容接口
 
 ### Netlify部署
 
@@ -48,10 +50,17 @@
 2. 在Netlify站点设置中配置环境变量：
    - 进入站点设置 > Build & deploy > Environment variables
    - 添加以下环境变量：
-     - `QWEN_API_KEY`: 你的通义千问API密钥
-      - `API_URL`: API端点URL（例如：https://xxx/v1/services/aigc/text-generation/generation）
+     ```
+      QWEN_API_KEY=你的API密钥
+      API_URL=https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions
+      ```
+    - **重要**：确保API_URL是完整的API端点URL，必须使用阿里云百炼的OpenAI兼容接口格式`https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions`，否则API调用会失败
+     
 
-3. 部署完成后，访问 `/test-env.html` 页面测试环境变量是否正确注入
+3. 部署完成后，访问以下页面进行测试：
+   - `/test-env.html` - 测试环境变量是否正确注入
+   - `/test-api-debug.html` - 测试API调用是否正常工作，并查看详细错误信息
+   - `/test-bailian-api.html` - 专门用于测试阿里云百炼API调用，提供直接调用和通过Netlify函数调用两种方式
 
 4. 如果环境变量更新，需要重新部署站点以使更改生效
 
