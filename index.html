@@ -728,9 +728,8 @@
             
             // API配置 - 从Netlify环境变量中读取
             // 注意：静态网站需要在构建时注入环境变量
-            // 在Netlify中，我们需要设置QWEN_API_KEY和API_URL环境变量
-            const API_KEY = '{{ QWEN_API_KEY }}';
-            const API_URL = '{{ API_URL }}';
+            // 不再在前端直接使用环境变量
+            // API调用将通过Netlify函数安全处理
             
             // 知识库内容
             const AVOID_THUNDER_CONTENT = `
@@ -1188,11 +1187,11 @@ Muhammad Ateeq Dear Dr. Ateeq
             }
             
             // 调用Qwen API
-            // 获取API配置
+            // 获取API配置 - 使用Netlify函数
             async function getApiConfig() {
-                // 直接使用前端定义的API变量
-                // 在Netlify部署时，这些变量会从Netlify环境变量中获取
-                return { apiKey: API_KEY, apiUrl: API_URL };
+                // 不再直接使用前端环境变量
+                // 而是通过Netlify函数安全地处理API调用
+                return { netlifyFunction: '/.netlify/functions/api' };
             }
             
             async function callQwenAPI(prompt, systemMessage="你是一个专业的学术邮件撰写助手，擅长根据用户需求生成得体、专业的邮件内容。") {
@@ -1200,11 +1199,7 @@ Muhammad Ateeq Dear Dr. Ateeq
                     // 获取API配置
                     const config = await getApiConfig();
                     
-                    const headers = {
-                        "Authorization": `Bearer ${config.apiKey}`,
-                        "Content-Type": "application/json"
-                    };
-                    
+                    // 构建请求负载
                     const payload = {
                         "model": "qwen-max",
                         "messages": [
@@ -1221,9 +1216,12 @@ Muhammad Ateeq Dear Dr. Ateeq
                         "temperature": 0.7
                     };
                     
-                    const response = await fetch(`${config.apiUrl}/chat/completions`, {
+                    // 调用Netlify函数而不是直接调用API
+                    const response = await fetch(config.netlifyFunction, {
                         method: 'POST',
-                        headers: headers,
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
                         body: JSON.stringify(payload)
                     });
                     

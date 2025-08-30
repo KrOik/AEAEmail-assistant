@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>环境变量测试</title>
+    <title>Netlify函数测试</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -11,20 +11,36 @@
             margin: 0 auto;
             padding: 20px;
         }
-        .variable {
+        .test-section {
             margin-bottom: 20px;
             padding: 10px;
             border: 1px solid #ddd;
             border-radius: 4px;
         }
-        .variable-name {
+        .test-title {
             font-weight: bold;
+            margin-bottom: 10px;
         }
-        .variable-value {
-            font-family: monospace;
-            margin-top: 5px;
-            padding: 5px;
+        .test-button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 10px 15px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
             background-color: #f5f5f5;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-family: monospace;
         }
         .status {
             margin-top: 5px;
@@ -36,49 +52,87 @@
         .error {
             color: red;
         }
+        .loading {
+            display: none;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
-    <h1>Netlify 环境变量测试</h1>
-    <p>此页面用于测试 Netlify 环境变量是否正确注入到静态 HTML 文件中。</p>
+    <h1>Netlify 函数测试</h1>
+    <p>此页面用于测试 Netlify 函数是否正确配置和工作。</p>
     
-    <div class="variable">
-        <div class="variable-name">QWEN_API_KEY:</div>
-        <div class="variable-value" id="api-key-value">{{ QWEN_API_KEY }}</div>
-        <div class="status" id="api-key-status"></div>
-    </div>
-    
-    <div class="variable">
-        <div class="variable-name">API_URL:</div>
-        <div class="variable-value" id="api-url-value">{{ API_URL }}</div>
-        <div class="status" id="api-url-status"></div>
+    <div class="test-section">
+        <div class="test-title">API函数测试</div>
+        <p>点击下面的按钮测试Netlify函数是否能正确处理API请求：</p>
+        <button id="test-api" class="test-button">测试API函数</button>
+        <div id="loading" class="loading">请求中...</div>
+        <div id="api-result" class="result"></div>
+        <div id="api-status" class="status"></div>
     </div>
     
     <script>
-        // 检查环境变量是否被替换
-        window.addEventListener('DOMContentLoaded', () => {
-            const apiKeyValue = document.getElementById('api-key-value').textContent;
-            const apiUrlValue = document.getElementById('api-url-value').textContent;
-            const apiKeyStatus = document.getElementById('api-key-status');
-            const apiUrlStatus = document.getElementById('api-url-status');
+        document.getElementById('test-api').addEventListener('click', async () => {
+            const resultElement = document.getElementById('api-result');
+            const statusElement = document.getElementById('api-status');
+            const loadingElement = document.getElementById('loading');
             
-            if (apiKeyValue === '{{ QWEN_API_KEY }}') {
-                apiKeyStatus.textContent = '错误: 占位符未被替换';
-                apiKeyStatus.className = 'status error';
-            } else {
-                apiKeyStatus.textContent = '成功: 占位符已被替换';
-                apiKeyStatus.className = 'status success';
-                // 隐藏实际的 API 密钥，只显示前几个字符
-                document.getElementById('api-key-value').textContent = 
-                    apiKeyValue.substring(0, 4) + '...' + apiKeyValue.substring(apiKeyValue.length - 4);
-            }
+            // 清除之前的结果
+            resultElement.textContent = '';
+            statusElement.textContent = '';
+            statusElement.className = 'status';
             
-            if (apiUrlValue === '{{ API_URL }}') {
-                apiUrlStatus.textContent = '错误: 占位符未被替换';
-                apiUrlStatus.className = 'status error';
-            } else {
-                apiUrlStatus.textContent = '成功: 占位符已被替换';
-                apiUrlStatus.className = 'status success';
+            // 显示加载中
+            loadingElement.style.display = 'block';
+            
+            try {
+                // 构建简单的测试请求
+                const testPayload = {
+                    "model": "qwen-max",
+                    "messages": [
+                        {
+                            "role": "system",
+                            "content": "你是一个测试助手。"
+                        },
+                        {
+                            "role": "user",
+                            "content": "这是一个API函数测试。请回复'测试成功'。"
+                        }
+                    ],
+                    "max_tokens": 50,
+                    "temperature": 0.7
+                };
+                
+                // 调用Netlify函数
+                const response = await fetch('/.netlify/functions/api', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(testPayload)
+                });
+                
+                // 隐藏加载中
+                loadingElement.style.display = 'none';
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultElement.textContent = JSON.stringify(data, null, 2);
+                    statusElement.textContent = '成功: Netlify函数正常工作';
+                    statusElement.className = 'status success';
+                } else {
+                    const errorText = await response.text();
+                    resultElement.textContent = `错误状态码: ${response.status}\n${errorText}`;
+                    statusElement.textContent = '错误: Netlify函数返回错误';
+                    statusElement.className = 'status error';
+                }
+            } catch (error) {
+                // 隐藏加载中
+                loadingElement.style.display = 'none';
+                
+                resultElement.textContent = `发生错误: ${error.message}`;
+                statusElement.textContent = '错误: 无法连接到Netlify函数';
+                statusElement.className = 'status error';
             }
         });
     </script>
