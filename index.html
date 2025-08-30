@@ -6,15 +6,6 @@
     <title>AEAMAIL Assistant - 学术邮件智能辅助工具</title>
     <!-- 添加Marked.js库 -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script>
-        // 配置Marked.js以正确处理换行符
-        document.addEventListener('DOMContentLoaded', function() {
-            marked.setOptions({
-                breaks: true,  // 将换行符转换为<br>
-                gfm: true      // 启用GitHub风格的Markdown
-            });
-        });
-    </script>
     <style>
         :root {
             --primary-color: #00ff8c;
@@ -1032,10 +1023,10 @@ Muhammad Ateeq Dear Dr. Ateeq
                     messageDiv.innerHTML = formatEmailResponse(content);
                 } else if (!isUser) {
                     // 使用Marked.js解析AI消息中的Markdown格式
-                    messageDiv.innerHTML = marked.parse(content);
+                    // 确保换行符被正确转换为Markdown换行
+                    const processedContent = content.replace(/\n/g, '  \n');
+                    messageDiv.innerHTML = marked.parse(processedContent);
                 } else {
-                    // 保留用户消息中的换行符，但不进行Markdown解析
-                    // 使用textContent确保HTML转义，防止XSS攻击
                     messageDiv.textContent = content;
                 }
                 
@@ -1048,8 +1039,8 @@ Muhammad Ateeq Dear Dr. Ateeq
                 // 先将【】标记转换为Markdown格式的加粗
                 let markdownContent = content
                     .replace(/【([^】]+)】/g, '**$1**')
-                    // 确保换行符被保留并转换为Markdown换行
-                    .replace(/\n/g, '\n\n');
+                    // 确保换行符被正确转换为Markdown换行
+                    .replace(/\n/g, '  \n');
                 
                 // 使用Marked.js解析Markdown
                 return marked.parse(markdownContent);
@@ -1239,7 +1230,12 @@ Muhammad Ateeq Dear Dr. Ateeq
                     });
                     
                     if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
+                        // 特殊处理504错误
+                        if (response.status === 504) {
+                            throw new Error(`HTTP error! status: 504 Gateway Timeout。请稍后重试，或尝试刷新页面。`);
+                        } else {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
                     }
                     
                     const result = await response.json();
@@ -1253,7 +1249,12 @@ Muhammad Ateeq Dear Dr. Ateeq
                     }
                 } catch (error) {
                     console.error('API调用失败:', error);
-                    return `API调用失败: ${error.message}`;
+                    // 特殊处理504错误
+                    if (error.message && (error.message.includes('504') || error.message.includes('Gateway Timeout'))) {
+                        return `API调用失败: 服务器响应超时(504)。请稍后重试，或尝试刷新页面。`;
+                    } else {
+                        return `API调用失败: ${error.message}`;
+                    }
                 }
             }
             
@@ -1270,7 +1271,12 @@ Muhammad Ateeq Dear Dr. Ateeq
                     return formatEmailResponse(result);
                 } catch (error) {
                     console.error('邮件生成失败:', error);
-                    return `邮件生成失败: ${error.message}`;
+                    // 特殊处理504错误
+                    if (error.message && (error.message.includes('504') || error.message.includes('Gateway Timeout'))) {
+                        return `邮件生成失败: 服务器响应超时(504)。请稍后重试，或尝试刷新页面。`;
+                    } else {
+                        return `邮件生成失败: ${error.message}`;
+                    }
                 }
             }
             
@@ -1396,7 +1402,14 @@ Muhammad Ateeq Dear Dr. Ateeq
                     hideTypingIndicator();
                     sendButton.disabled = false;
                     
-                    const errorMessage = `抱歉，处理您的请求时出现错误: ${error.message}`;
+                    let errorMessage;
+                    // 特殊处理504错误
+                    if (error.message && (error.message.includes('504') || error.message.includes('Gateway Timeout'))) {
+                        errorMessage = `抱歉，服务器响应超时(504)。请稍后重试，或尝试刷新页面。`;
+                    } else {
+                        errorMessage = `抱歉，处理您的请求时出现错误: ${error.message}`;
+                    }
+                    
                     addMessage(errorMessage, false);
                     
                     // 即使出错也保存用户消息
