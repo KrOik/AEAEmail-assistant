@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "在构建时将 Netlify 环境变量注入到 HTML 文件中",
   "main": "index.js",
-  "type": "module",
   "keywords": [
     "netlify",
     "netlify-plugin"
@@ -11,6 +10,6 @@
   "author": "AEAEmail Assistant",
   "license": "MIT",
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=12.0.0"
   }
 }

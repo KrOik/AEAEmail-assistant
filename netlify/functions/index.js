@@ -1,8 +1,8 @@
 // Netlify 环境变量注入插件
-import fs from 'fs';
-import path from 'path';
+const fs = require('fs');
+const path = require('path');
 
-export default {
+module.exports = {
   onPostBuild: async ({ constants, utils }) => {
     const { PUBLISH_DIR } = constants;
     const filesToProcess = [
