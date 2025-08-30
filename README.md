@@ -38,7 +38,7 @@
 3. 创建`.env`文件，配置API密钥：
    ```
    QWEN_API_KEY=你的API密钥
-   API_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+   API_URL=你的端点
    ```
 
 ## 使用指南
