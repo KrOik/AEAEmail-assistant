@@ -41,6 +41,21 @@
    API_URL=你的端点
    ```
 
+### Netlify部署
+
+1. 在Netlify上创建新站点，连接到你的GitHub仓库
+
+2. 在Netlify站点设置中配置环境变量：
+   - 进入站点设置 > Build & deploy > Environment variables
+   - 添加以下环境变量：
+     - `QWEN_API_KEY`: 你的API密钥
+     - `API_URL`: 你的端点
+
+3. 触发重新部署
+   - 部署完成后，环境变量将被注入到前端代码中
+
+注意：环境变量只在构建时注入，如需更新API密钥，需要重新部署站点。
+
 ## 使用指南
 
 ### 知识库查询模式
