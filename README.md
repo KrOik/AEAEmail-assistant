@@ -48,10 +48,20 @@
 2. 在Netlify站点设置中配置环境变量：
    - 进入站点设置 > Build & deploy > Environment variables
    - 添加以下环境变量：
-     - `QWEN_API_KEY`: 你的API密钥
-     - `API_URL`: 你的端点
+     - `QWEN_API_KEY`: 你的通义千问API密钥
+      - `API_URL`: API端点URL（例如：https://xxx/v1/services/aigc/text-generation/generation）
 
-3. 触发重新部署
+3. 部署完成后，访问 `/test-env.html` 页面测试环境变量是否正确注入
+
+4. 如果环境变量更新，需要重新部署站点以使更改生效
+
+### 环境变量注入机制
+
+本项目使用自定义Netlify构建插件在构建时将环境变量注入到静态HTML文件中：
+
+1. `netlify.toml` 文件配置了构建设置和插件
+2. `netlify-plugin-env-var-inject` 插件在构建后处理阶段将占位符替换为实际环境变量值
+3. 占位符格式为 `{{ VARIABLE_NAME }}`
    - 部署完成后，环境变量将被注入到前端代码中
 
 注意：环境变量只在构建时注入，如需更新API密钥，需要重新部署站点。

@@ -1,0 +1,28 @@
+# Netlify 配置文件
+
+# 构建设置
+[build]
+  publish = "./"
+  command = "echo 'Static site, no build required'"
+
+# 生产环境设置
+[context.production]
+  environment = { NODE_VERSION = "18" }
+
+# 预览环境设置
+[context.deploy-preview]
+  environment = { NODE_VERSION = "18" }
+
+# 分支部署环境设置
+[context.branch-deploy]
+  environment = { NODE_VERSION = "18" }
+
+# 重定向设置 - 确保单页应用正常工作
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# 环境变量注入插件
+[[plugins]]
+  package = "./netlify/functions"

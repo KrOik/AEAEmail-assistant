@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>环境变量测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .variable {
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .variable-name {
+            font-weight: bold;
+        }
+        .variable-value {
+            font-family: monospace;
+            margin-top: 5px;
+            padding: 5px;
+            background-color: #f5f5f5;
+        }
+        .status {
+            margin-top: 5px;
+            font-style: italic;
+        }
+        .success {
+            color: green;
+        }
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <h1>Netlify 环境变量测试</h1>
+    <p>此页面用于测试 Netlify 环境变量是否正确注入到静态 HTML 文件中。</p>
+    
+    <div class="variable">
+        <div class="variable-name">QWEN_API_KEY:</div>
+        <div class="variable-value" id="api-key-value">{{ QWEN_API_KEY }}</div>
+        <div class="status" id="api-key-status"></div>
+    </div>
+    
+    <div class="variable">
+        <div class="variable-name">API_URL:</div>
+        <div class="variable-value" id="api-url-value">{{ API_URL }}</div>
+        <div class="status" id="api-url-status"></div>
+    </div>
+    
+    <script>
+        // 检查环境变量是否被替换
+        window.addEventListener('DOMContentLoaded', () => {
+            const apiKeyValue = document.getElementById('api-key-value').textContent;
+            const apiUrlValue = document.getElementById('api-url-value').textContent;
+            const apiKeyStatus = document.getElementById('api-key-status');
+            const apiUrlStatus = document.getElementById('api-url-status');
+            
+            if (apiKeyValue === '{{ QWEN_API_KEY }}') {
+                apiKeyStatus.textContent = '错误: 占位符未被替换';
+                apiKeyStatus.className = 'status error';
+            } else {
+                apiKeyStatus.textContent = '成功: 占位符已被替换';
+                apiKeyStatus.className = 'status success';
+                // 隐藏实际的 API 密钥，只显示前几个字符
+                document.getElementById('api-key-value').textContent = 
+                    apiKeyValue.substring(0, 4) + '...' + apiKeyValue.substring(apiKeyValue.length - 4);
+            }
+            
+            if (apiUrlValue === '{{ API_URL }}') {
+                apiUrlStatus.textContent = '错误: 占位符未被替换';
+                apiUrlStatus.className = 'status error';
+            } else {
+                apiUrlStatus.textContent = '成功: 占位符已被替换';
+                apiUrlStatus.className = 'status success';
+            }
+        });
+    </script>
+</body>
+</html>
