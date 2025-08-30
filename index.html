@@ -1018,33 +1018,24 @@ Muhammad Ateeq Dear Dr. Ateeq
                 messageDiv.classList.add('message');
                 messageDiv.classList.add(isUser ? 'user-message' : 'ai-message');
                 
-                // 如果是AI消息且包含邮件内容，需要特殊处理
-                if (!isUser && content.includes('【邮件主题】')) {
-                    messageDiv.innerHTML = formatEmailResponse(content);
-                } else if (!isUser) {
-                    // 使用Marked.js解析AI消息中的Markdown格式
-                    // 确保换行符被正确转换为Markdown换行
-                    const processedContent = content.replace(/\n/g, '  \n');
-                    messageDiv.innerHTML = marked.parse(processedContent);
-                } else {
+                if (isUser) {
                     messageDiv.textContent = content;
+                } else {
+                    // 对于所有AI消息，统一处理Markdown渲染
+                    // 1. 将【】替换为加粗
+                    // 2. 将换行符正确处理为Markdown换行
+                    // 3. 使用marked.js解析
+                    const markdownContent = content
+                        .replace(/【([^】]+)】/g, '**$1**')
+                        .replace(/\n/g, '  \n');
+                    messageDiv.innerHTML = marked.parse(markdownContent);
                 }
                 
                 chatMessages.appendChild(messageDiv);
                 chatMessages.scrollTop = chatMessages.scrollHeight;
             }
             
-            // 格式化邮件响应内容
-            function formatEmailResponse(content) {
-                // 先将【】标记转换为Markdown格式的加粗
-                let markdownContent = content
-                    .replace(/【([^】]+)】/g, '**$1**')
-                    // 确保换行符被正确转换为Markdown换行
-                    .replace(/\n/g, '  \n');
-                
-                // 使用Marked.js解析Markdown
-                return marked.parse(markdownContent);
-            }
+
             
             // 显示正在输入指示器
             function showTypingIndicator() {
