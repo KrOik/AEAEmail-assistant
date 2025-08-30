@@ -5,10 +5,12 @@
 [functions]
   directory = "netlify/functions"
   node_bundler = "esbuild"
-  node_version = "18.x"
+
+[functions.node_version]
+  nodejs = "18.x"
 
 [build.environment]
-  NODE_OPTIONS = "--experimental-modules"
+  NODE_OPTIONS = "--enable-source-maps --experimental-json-modules"
   NODE_VERSION = "18"
 
 [[redirects]]
