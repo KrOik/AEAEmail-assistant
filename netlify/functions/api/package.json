@@ -1,0 +1,11 @@
+{
+  "name": "netlify-functions-api",
+  "version": "1.0.0",
+  "description": "Netlify函数处理API调用",
+  "main": "api.js",
+  "dependencies": {
+    "node-fetch": "^2.6.7"
+  },
+  "author": "AEAEmail Assistant",
+  "license": "MIT"
+}
